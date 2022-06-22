@@ -1,15 +1,14 @@
 /*Integração concorrente
   Usando o método dos trapézios*/
-#include<stdio.h>
-#include<math.h>
-#include<stdlib.h>
-#include<pthread.h>
+#include <stdio.h>
+#include <math.h>
+#include <stdlib.h>
+#include <pthread.h>
 #include "timer.h"
+#include "curves.h"
 
-// função que será integrada
-double f(double x){
-  return (2*(x*x*x*x)-3*(x*x*x)-5*(x*x)+2*x-2)/(1.5*(x*x*x*x)+4); 
-}
+// ponteiro para a função que será integrada
+double (*f)(double);
 
 // funcao que integra a função f no intervalo [a, b],
 // subdividinto este intervalo em n partes 
@@ -35,16 +34,38 @@ int main(int argc, char* argv[]) {
 
   double inicio, fim, delta; // variáveis para tomada de tempo
   
-  GET_TIME(inicio);
   //leitura e avaliacao dos parametros de entrada
 
-  if(argc<3) {
-    printf("Digite: %s <extremo a do intervalo> <extremo b do intervalo> <número de subdivisões do intervalo>\n", argv[0]);
-    return 1;
+  char aux[100];
+  printf("digite qual curva carregada será integrada <1/2/3>\n");
+  fgets(aux, sizeof aux, stdin);
+  int curve = atoi(aux);
+  if(curve != 1 && curve != 2 && curve != 3){
+    printf("curva %d digitada inválida\n", curve);
+    exit(-1);
   }
-  float a = atoi(argv[1]);
-  float b = atoi(argv[2]);
-  float n = atoi(argv[3]);
+  printf("digite o <extremo a do intervalo>\n");
+  fgets(aux, sizeof aux, stdin);
+  double a = atof(aux);
+  printf("digite o <extremo b do intervalo>\n");
+  fgets(aux, sizeof aux, stdin);
+  double b = atof(aux);
+  printf("digite o <número de subdivisões do intervalo>\n");
+  fgets(aux, sizeof aux, stdin);
+  double n = atoi(aux);
+
+  GET_TIME(inicio);
+  
+  switch(curve){
+    case 1:
+      f = &c1;
+      break;
+    case 2:
+      f = &c2;
+      break;
+    case 3:
+      f = &c3;
+  }
   
   GET_TIME(fim);
   delta = fim - inicio;

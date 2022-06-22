@@ -1,3 +1,3 @@
 language = "c"
-run = "gcc -pthread concorrente.c -o concorrente -Wall -lm && ./concorrente 2 0 1000 10000000"
-#run = "gcc sequencial.c -o sequencial -Wall -lm && ./sequencial 0 1000 10000000"
+run = "gcc -c curves.c -Wall -lm && gcc -pthread concorrente.c -o concorrente curves.o -Wall -lm && ./concorrente 2 "
+#run = "gcc -c curves.c -Wall -lm && gcc sequencial.c -o sequencial curves.o -Wall -lm && ./sequencial"

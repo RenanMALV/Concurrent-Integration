@@ -1,18 +1,15 @@
 /*Integração concorrente
   Usando o método dos trapézios*/
-#include<stdio.h>
-#include<math.h>
-#include<stdlib.h>
-#include<pthread.h>
+#include <stdio.h>
+#include <math.h>
+#include <stdlib.h>
+#include <pthread.h>
 #include "timer.h"
+#include "curves.h"
 
 int nthreads; //numero de threads
 double* test1 = NULL;
 double* test2 = NULL;
-// função que será integrada
-double f(double x){
-  return (2*(x*x*x*x)-3*(x*x*x)-5*(x*x)+2*x-2)/(1.5*(x*x*x*x)+4); 
-}
 
 typedef struct{
   int id; //identificador do intervalo que a thread ira processar
@@ -40,10 +37,11 @@ void * integrate(void *arg) {
   }
   // multiplica por 2 os termos do meio e
   // calcula as funções nos extremos e obtém o resultado 
-  double res = (h/2 * (f(args->a) + (2*soma) + f(args->b)));
+  double res = (h/2 * (args->f(args->a) + (2*soma) + args->f(args->b)));
   // retornando o resultado à main com o join recebendo este valor obtido
   double* retPointer = malloc(sizeof(double));
   *retPointer = res;
+  // testa a liberacao de memoria
   /*if(args->id==0)
     test1 = retPointer;
   else
@@ -58,17 +56,35 @@ int main(int argc, char* argv[]) {
   tArgs *args; //argumentos para a integração
   double inicio, fim, delta; // variáveis para tomada de tempo
    
-  GET_TIME(inicio);
   //leitura e avaliacao dos parametros de entrada
-  if(argc<4) {
-    printf("Digite: %s <numero de threads> <extremo a do intervalo> <extremo b do intervalo> <número de subdivisões do intervalo>\n", argv[0]);
+  if(argc<1) {
+    printf("Digite: %s <numero de threads>\n", argv[0]);
     return 1;
   }
   nthreads = atoi(argv[1]);
-  double a = atoi(argv[2]);
-  double b = atoi(argv[3]);
-  double n = atoi(argv[4]);
+  
+  char aux[100];
+  printf("digite qual curva carregada será integrada <1/2/3>\n");
+  fgets(aux, sizeof aux, stdin);
+  int curve = atoi(aux);
+  if(curve != 1 && curve != 2 && curve != 3){
+    printf("curva %d digitada inválida\n", curve);
+    exit(-1);
+  }
+  printf("digite o <extremo a do intervalo>\n");
+  fgets(aux, sizeof aux, stdin);
+  double a = atof(aux);
+  printf("digite o <extremo b do intervalo>\n");
+  fgets(aux, sizeof aux, stdin);
+  double b = atof(aux);
+  printf("digite o <número de subdivisões do intervalo>\n");
+  fgets(aux, sizeof aux, stdin);
+  double n = atoi(aux);
+
+  GET_TIME(inicio);
+  // número de trapézios por thread
   double nPerThread = floor(n/nthreads);
+  // intervalo de integração de cada thread
   double intervalPerThread = (b-a)/nthreads;
 
   //alocacao das estruturas
@@ -88,8 +104,16 @@ int main(int argc, char* argv[]) {
   //criacao das threads
   for(int i=0; i<nthreads; i++) {
     (args+i)->id = i;
-    (args+i)->f = &f;
-    
+    switch(curve){
+      case 1:
+        (args+i)->f = &c1;
+        break;
+      case 2:
+        (args+i)->f = &c2;
+        break;
+      case 3:
+        (args+i)->f = &c3;
+    }
     // deslocando os limites do intervalo de acordo com a thread
     (args+i)->a = a + intervalPerThread*i;
     (args+i)->b = a + intervalPerThread*(i+1);
