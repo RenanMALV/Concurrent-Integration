@@ -7,9 +7,13 @@
 #include "timer.h"
 #include "curves.h"
 
+#define tolerance 1e-6
 int nthreads; //numero de threads
+
+/*Ponteiros para teste de liberação de memória
 double* test1 = NULL;
 double* test2 = NULL;
+*/
 
 typedef struct{
   int id; //identificador do intervalo que a thread ira processar
@@ -148,17 +152,39 @@ int main(int argc, char* argv[]) {
   delta = fim - inicio;
   printf("Tempo concorrente: %lf\n", delta);
 
-  //calculando o resultado sequencial e verificando corretude
-  /*
-  for(int i=0; i<dim; i++) {
-    if(result[i] != saida[i]){
-      printf("Falhou no teste de corretude\n");
-      free(args);
-      free(tid);
-      exit(-1);
+  printf("Executar teste de corretude? <s/n>:\n");
+  fgets(aux, sizeof aux, stdin);
+  if(aux[0] == 's'){
+// ----------------------------------------------------------------------------
+    //calculando o resultado sequencial e verificando corretude
+    printf("Executando o teste de corretude\n");
+      
+    // resolução (tamanho do intervalo) h de cada parcela de trapézios
+    double h = (b-a)/n;
+    double sum_verif= 0;
+    double x;
+    // calculando os termos do meio
+    for(int i=1; i<=n-1; i++){
+      // define o ponto x dentro do intervalo dividido
+      x = a + (h*i);
+      // calcula o valor da parcela e soma no acumulador
+      sum_verif += args->f(x);
     }
+    // multiplica por 2 os termos do meio e
+    // calcula as funções nos extremos e obtém o resultado 
+    sum_verif = (h/2 * (args->f(a) + (2*sum_verif) + args->f(b)));
+  
+    // verifica se a diferença entre os dois numeros está fora da tolerancia máxima
+    if(fabs(sum-sum_verif) > tolerance)
+        printf("Falhou no teste de corretude\n");
+    else
+        printf("Passou no teste de corretude\n");
+
+//-------------------------------------------------------------------------------
   }
-  */
+  else if(aux[0] != 'n')
+    printf("Entrada não reconhecida, ignorando o teste de corretude\n");
+  
   //liberacao da memoria
   GET_TIME(inicio);
   free(args);
@@ -166,8 +192,6 @@ int main(int argc, char* argv[]) {
   GET_TIME(fim);   
   delta = fim - inicio;
   printf("Tempo finalizacao:%lf\n", delta);
-
-  printf("Passou no teste de corretude\n");
-
+  
   return 0;
 }
