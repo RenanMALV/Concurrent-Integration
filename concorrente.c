@@ -27,7 +27,7 @@ typedef struct{
 // cada parte pode executar em uma thread diferente
 void * integrate(void *arg) {
   tArgs * args = (tArgs *) arg;
-  
+
   // precisão (tamanho do intervalo) h de cada parcela de trapézios
   double h = (args->b-args->a)/args->n;
   double soma = 0;
@@ -40,7 +40,7 @@ void * integrate(void *arg) {
     soma += args->f(x);
   }
   // multiplica por 2 os termos do meio e
-  // calcula as funções nos extremos e obtém o resultado 
+  // calcula as funções nos extremos e obtém o resultado
   double res = (h/2 * (args->f(args->a) + (2*soma) + args->f(args->b)));
   // retornando o resultado à main com o join recebendo este valor obtido
   double* retPointer = malloc(sizeof(double));
@@ -55,18 +55,18 @@ void * integrate(void *arg) {
 
 //fluxo principal
 int main(int argc, char* argv[]) {
-   
+
   pthread_t *tid; //identificadores das threads no sistema
   tArgs *args; //argumentos para a integração
   double inicio, fim, delta; // variáveis para tomada de tempo
-   
+
   //leitura e avaliacao dos parametros de entrada
   if(argc<1) {
     printf("Digite: %s <numero de threads>\n", argv[0]);
     return 1;
   }
   nthreads = atoi(argv[1]);
-  
+
   char aux[100];
   printf("digite qual curva carregada será integrada <1/2/3>\n");
   fgets(aux, sizeof aux, stdin);
@@ -96,15 +96,15 @@ int main(int argc, char* argv[]) {
   if(tid==NULL) {puts("ERRO--malloc"); return 2;}
   args = (tArgs*) malloc(sizeof(tArgs)*nthreads);
   if(args==NULL) {puts("ERRO--malloc"); return 2;}
-  
-   
+
+
   GET_TIME(fim);
   delta = fim - inicio;
   printf("Tempo inicializacao:%lf\n", delta);
-  
+
   //início da tarefa
   GET_TIME(inicio);
-  
+
   //criacao das threads
   for(int i=0; i<nthreads; i++) {
     (args+i)->id = i;
@@ -121,7 +121,7 @@ int main(int argc, char* argv[]) {
     // deslocando os limites do intervalo de acordo com a thread
     (args+i)->a = a + intervalPerThread*i;
     (args+i)->b = a + intervalPerThread*(i+1);
-    
+
     if(i==nthreads-1)
       (args+i)->n = n-(i*nPerThread); // porção de nPerThread + restante da divisão, se houver
     else
@@ -129,10 +129,11 @@ int main(int argc, char* argv[]) {
     if(pthread_create(tid+i, NULL, integrate, (void*) (args+i))){
       puts("ERRO--pthread_create"); return 3;
     }
-  } 
+  }
+  
   //espera pelo termino da threads
   double sum=0;
-  double* ret; 
+  double* ret;
   for(int i=0; i<nthreads; i++) {
     pthread_join(*(tid+i),(void*) &ret);
     sum += (double) *ret;
@@ -145,12 +146,14 @@ int main(int argc, char* argv[]) {
       printf("\nvalor alocado dinamicamente foi liberado da memória:%lf\n",*test1);
     else
       printf("\nvalor alocado dinamicamente foi liberado da memória:%lf\n",*test2);*/
-    
+
   }
   printf("\nResultado: %lf\n\n", sum);
-  GET_TIME(fim);   
+  GET_TIME(fim);
   delta = fim - inicio;
   printf("Tempo concorrente: %lf\n", delta);
+
+
 
   printf("Executar teste de corretude? <s/n>:\n");
   fgets(aux, sizeof aux, stdin);
@@ -158,7 +161,7 @@ int main(int argc, char* argv[]) {
 // ----------------------------------------------------------------------------
     //calculando o resultado sequencial e verificando corretude
     printf("Executando o teste de corretude\n");
-      
+
     // resolução (tamanho do intervalo) h de cada parcela de trapézios
     double h = (b-a)/n;
     double sum_verif= 0;
@@ -171,11 +174,11 @@ int main(int argc, char* argv[]) {
       sum_verif += args->f(x);
     }
     // multiplica por 2 os termos do meio e
-    // calcula as funções nos extremos e obtém o resultado 
+    // calcula as funções nos extremos e obtém o resultado
     sum_verif = (h/2 * (args->f(a) + (2*sum_verif) + args->f(b)));
-  
+
     // verifica se a diferença entre os dois numeros está fora da tolerancia máxima
-    if(fabs(sum-sum_verif) > tolerance)
+    if(fabs(sum-sum_verif)/sum > tolerance)
         printf("Falhou no teste de corretude\n");
     else
         printf("Passou no teste de corretude\n");
@@ -184,14 +187,14 @@ int main(int argc, char* argv[]) {
   }
   else if(aux[0] != 'n')
     printf("Entrada não reconhecida, ignorando o teste de corretude\n");
-  
+
   //liberacao da memoria
   GET_TIME(inicio);
   free(args);
   free(tid);
-  GET_TIME(fim);   
+  GET_TIME(fim);
   delta = fim - inicio;
   printf("Tempo finalizacao:%lf\n", delta);
-  
+
   return 0;
 }
